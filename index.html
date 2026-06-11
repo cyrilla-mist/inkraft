@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>墨推 Inkraft · 学术写作助手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #c9a96e;
+    --text: #e8e8e8;
+    --text-secondary: #888888;
+    --error: #e05555;
+    --success: #4caf82;
+    --border: rgba(201, 169, 110, 0.25);
+  }
+
+  [data-theme="light"] {
+    --bg: #f8f6f1;
+    --card: #ffffff;
+    --accent: #c9a96e;
+    --text: #1e1e1e;
+    --text-secondary: #666666;
+    --error: #e05555;
+    --success: #4caf82;
+    --border: rgba(201, 169, 110, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    transition: background 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  h1, h2, h3, .logo, .tab-label {
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  code, pre, .mono {
+    font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  }
+
+  a { color: var(--accent); }
+
+  /* ===== Header ===== */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .badge-no-key {
+    font-size: 0.8rem;
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 999px;
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    transform: scale(1.05);
+  }
+
+  /* ===== Tabs ===== */
+  .tab-nav-wrapper {
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .tab-nav {
+    display: flex;
+    position: relative;
+    min-width: max-content;
+    padding: 0 24px;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1rem;
+    padding: 16px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+  }
+
+  .tab-btn.active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .tab-indicator {
+    position: absolute;
+    bottom: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 3px 3px 0 0;
+    transition: left 0.3s ease, width 0.3s ease;
+  }
+
+  /* ===== Main ===== */
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.25s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .card h2 {
+    margin-top: 0;
+    color: var(--accent);
+    font-size: 1.25rem;
+  }
+
+  textarea, select, input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.2s ease, background 0.3s ease, color 0.3s ease;
+  }
+
+  textarea:focus, select:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea.input-error, input.input-error {
+    border-color: var(--error) !important;
+  }
+
+  .field-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+  }
+
+  .field label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .btn {
+    background: var(--accent);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+  }
+
+  .btn:hover:not(:disabled) { opacity: 0.88; }
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+
+  /* ===== Loading ===== */
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(201, 169, 110, 0.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--border) 25%, transparent 37%, var(--border) 63%);
+    background-size: 400% 100%;
+    animation: skeleton 1.4s ease infinite;
+    border-radius: 6px;
+    height: 16px;
+    margin: 8px 0;
+  }
+
+  @keyframes skeleton {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+
+  /* ===== Error message ===== */
+  .error-msg {
+    color: var(--error);
+    background: rgba(224, 85, 85, 0.1);
+    border: 1px solid var(--error);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    font-size: 0.9rem;
+  }
+
+  /* ===== Output areas ===== */
+  .output-area {
+    margin-top: 16px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  .col-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .col-box h3 {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+
+  .col-content {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  del {
+    color: var(--error);
+    text-decoration: line-through;
+    background: rgba(224, 85, 85, 0.08);
+  }
+
+  ins {
+    color: var(--success);
+    text-decoration: none;
+    background: rgba(76, 175, 130, 0.12);
+  }
+
+  .reduction-badge {
+    display: inline-block;
+    margin-top: 12px;
+    background: rgba(76, 175, 130, 0.12);
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 0.85rem;
+  }
+
+  /* changes underline + tooltip */
+  .change-mark {
+    text-decoration: underline wavy var(--accent);
+    cursor: help;
+    position: relative;
+  }
+
+  .change-mark .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    width: max-content;
+    max-width: 260px;
+    white-space: normal;
+    z-index: 10;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  }
+
+  .change-mark:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* cultural note */
+  .culture-note {
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+    background: rgba(201, 169, 110, 0.08);
+  }
+
+  #translate-culture {
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+
+  .culture-note h3 {
+    margin: 0 0 8px;
+    color: var(--accent);
+    font-size: 0.95rem;
+  }
+
+  /* reference list */
+  .ref-item {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    line-height: 1.7;
+  }
+
+  .ref-item:last-child { border-bottom: none; }
+
+  .ref-warning {
+    color: var(--error);
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+
+  /* ===== Footer ===== */
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+
+  .copy-btn {
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">墨推 Inkraft</div>
+  <div class="header-right">
+    <button class="theme-toggle" id="themeToggle" title="切换日夜模式">🌙</button>
+  </div>
+</header>
+
+<div class="tab-nav-wrapper">
+  <nav class="tab-nav" id="tabNav">
+    <button class="tab-btn active" data-tab="reduce">降重</button>
+    <button class="tab-btn" data-tab="polish">学术润色</button>
+    <button class="tab-btn" data-tab="summary">摘要生成</button>
+    <button class="tab-btn" data-tab="translate">翻译润色</button>
+    <button class="tab-btn" data-tab="reference">参考文献</button>
+    <span class="tab-indicator" id="tabIndicator"></span>
+  </nav>
+</div>
+
+<main>
+
+  <!-- ① 论文降重 -->
+  <section class="panel active" id="panel-reduce">
+    <div class="card">
+      <h2>论文降重</h2>
+      <textarea id="reduce-input" rows="6" placeholder="粘贴需要降重的文字"></textarea>
+      <button class="btn" id="reduce-submit">开始降重</button>
+      <div id="reduce-error"></div>
+      <div id="reduce-loading" class="output-area" style="display:none;">
+        <span class="spinner"></span>正在改写中...
+      </div>
+      <div class="output-area" id="reduce-output" style="display:none;">
+        <div class="two-col">
+          <div class="col-box">
+            <h3>原文</h3>
+            <div class="col-content" id="reduce-original"></div>
+          </div>
+          <div class="col-box">
+            <h3>改写结果</h3>
+            <div class="col-content" id="reduce-rewritten"></div>
+          </div>
+        </div>
+        <div class="reduction-badge" id="reduce-percent"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 学术润色 -->
+  <section class="panel" id="panel-polish">
+    <div class="card">
+      <h2>学术润色</h2>
+      <textarea id="polish-input" rows="6" placeholder="输入口语化或不规范的表达"></textarea>
+      <div class="field-row">
+        <div class="field">
+          <label for="polish-level">润色强度</label>
+          <select id="polish-level">
+            <option value="轻度">轻度</option>
+            <option value="标准" selected>标准</option>
+            <option value="严格">严格</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" id="polish-submit">开始润色</button>
+      <div id="polish-error"></div>
+      <div id="polish-loading" class="output-area" style="display:none;">
+        <span class="spinner"></span>正在润色中...
+      </div>
+      <div class="output-area" id="polish-output" style="display:none;">
+        <div class="col-box">
+          <h3>润色结果（下划线处可悬停查看修改理由）</h3>
+          <div class="col-content" id="polish-result"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 摘要生成 -->
+  <section class="panel" id="panel-summary">
+    <div class="card">
+      <h2>摘要生成</h2>
+      <textarea id="summary-input" rows="8" placeholder="粘贴正文内容"></textarea>
+      <div class="field-row">
+        <div class="field">
+          <label for="summary-length">字数</label>
+          <select id="summary-length">
+            <option value="100">100字</option>
+            <option value="200" selected>200字</option>
+            <option value="300">300字</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="summary-lang">语言</label>
+          <select id="summary-lang">
+            <option value="中文" selected>中文</option>
+            <option value="英文">英文</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" id="summary-submit">生成摘要</button>
+      <div id="summary-error"></div>
+      <div id="summary-loading" class="output-area" style="display:none;">
+        <span class="spinner"></span>正在生成中...
+      </div>
+      <div class="output-area" id="summary-output" style="display:none;">
+        <div class="col-box">
+          <h3>摘要</h3>
+          <div class="col-content" id="summary-result"></div>
+        </div>
+        <button class="btn btn-secondary copy-btn" id="summary-copy">一键复制</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 跨文化翻译润色 -->
+  <section class="panel" id="panel-translate">
+    <div class="card">
+      <h2>跨文化翻译润色</h2>
+      <textarea id="translate-input" rows="6" placeholder="输入需要翻译的中文内容"></textarea>
+      <div class="field-row">
+        <div class="field">
+          <label for="translate-lang">目标语言</label>
+          <select id="translate-lang">
+            <option value="英文" selected>英文</option>
+            <option value="日文">日文</option>
+            <option value="法文">法文</option>
+            <option value="西班牙文">西班牙文</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="translate-scene">场景</label>
+          <select id="translate-scene">
+            <option value="学术" selected>学术</option>
+            <option value="商务">商务</option>
+            <option value="社交">社交</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" id="translate-submit">开始翻译</button>
+      <div id="translate-error"></div>
+      <div id="translate-loading" class="output-area" style="display:none;">
+        <span class="spinner"></span>正在翻译中...
+      </div>
+      <div class="output-area" id="translate-output" style="display:none;">
+        <div class="col-box">
+          <h3>译文</h3>
+          <div class="col-content" id="translate-result"></div>
+        </div>
+        <div class="culture-note">
+          <h3>文化注意事项</h3>
+          <div id="translate-culture"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ 参考文献格式化 -->
+  <section class="panel" id="panel-reference">
+    <div class="card">
+      <h2>参考文献格式化</h2>
+      <textarea id="reference-input" rows="8" placeholder="支持一次粘贴多条参考文献，每行一条"></textarea>
+      <div class="field-row">
+        <div class="field">
+          <label for="reference-format">格式</label>
+          <select id="reference-format">
+            <option value="APA" selected>APA</option>
+            <option value="MLA">MLA</option>
+            <option value="GB/T 7714">GB/T 7714</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" id="reference-submit">开始格式化</button>
+      <div id="reference-error"></div>
+      <div id="reference-loading" class="output-area" style="display:none;">
+        <span class="spinner"></span>正在格式化中...
+      </div>
+      <div class="output-area" id="reference-output" style="display:none;">
+        <div class="col-box">
+          <h3>格式化结果</h3>
+          <div id="reference-list"></div>
+        </div>
+        <button class="btn btn-secondary copy-btn" id="reference-copy">一键复制全部</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  墨推 Inkraft · by Cyrilla｜<a href="https://hiseeu-yomiiii.github.io/portfolio" target="_blank" rel="noopener">更多项目 →</a>
+</footer>
+
+<script>
+  // ============ 配置 ============
+  // 部署 Worker 后，将下面的地址替换为你的 Worker 实际地址
+  const WORKER_URL = 'https://inkraft-worker.cyyuhiseeu.workers.dev/api/chat';
+
+  // ============ 主题切换 ============
+  const themeToggle = document.getElementById('themeToggle');
+  const root = document.documentElement;
+
+  function applyTheme(theme) {
+    root.setAttribute('data-theme', theme);
+    themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+    localStorage.setItem('inkraft-theme', theme);
+  }
+
+  applyTheme(localStorage.getItem('inkraft-theme') || 'dark');
+
+  themeToggle.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // ============ Tab 切换 ============
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabIndicator = document.getElementById('tabIndicator');
+  const panels = document.querySelectorAll('.panel');
+
+  function moveIndicator(btn) {
+    tabIndicator.style.left = btn.offsetLeft + 'px';
+    tabIndicator.style.width = btn.offsetWidth + 'px';
+  }
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      moveIndicator(btn);
+
+      const target = btn.dataset.tab;
+      panels.forEach(p => p.classList.toggle('active', p.id === `panel-${target}`));
+    });
+  });
+
+  window.addEventListener('load', () => moveIndicator(document.querySelector('.tab-btn.active')));
+  window.addEventListener('resize', () => moveIndicator(document.querySelector('.tab-btn.active')));
+
+  // ============ 通用工具函数 ============
+  async function callAPI(messages) {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages }),
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      throw new Error('服务器返回格式错误');
+    }
+
+    if (!res.ok) {
+      throw new Error(data.error || `请求失败（${res.status}）`);
+    }
+
+    if (data.error) throw new Error(data.error);
+
+    return data.content;
+  }
+
+  // 提取 AI 返回内容中的 JSON（兼容 ```json 代码块包裹）
+  function extractJSON(text) {
+    let cleaned = text.trim();
+    const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) cleaned = fenceMatch[1].trim();
+    return JSON.parse(cleaned);
+  }
+
+  function escapeHTML(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function setLoading(prefix, isLoading) {
+    document.getElementById(`${prefix}-loading`).style.display = isLoading ? 'block' : 'none';
+    document.getElementById(`${prefix}-submit`).disabled = isLoading;
+    if (isLoading) document.getElementById(`${prefix}-output`).style.display = 'none';
+  }
+
+  function showError(prefix, message) {
+    const el = document.getElementById(`${prefix}-error`);
+    el.innerHTML = message ? `<div class="error-msg">${escapeHTML(message)}</div>` : '';
+  }
+
+  function markInputError(input, hasError) {
+    input.classList.toggle('input-error', hasError);
+  }
+
+  // 简单的逐词 LCS diff，返回 HTML 片段（原文用 <del>，新文用 <ins>）
+  function diffWords(oldText, newText) {
+    const a = oldText.split(/(\s+)/).filter(s => s.length);
+    const b = newText.split(/(\s+)/).filter(s => s.length);
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+
+    for (let i = m - 1; i >= 0; i--) {
+      for (let j = n - 1; j >= 0; j--) {
+        dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+
+    let i = 0, j = 0;
+    const oldHTML = [], newHTML = [];
+
+    while (i < m && j < n) {
+      if (a[i] === b[j]) {
+        oldHTML.push(escapeHTML(a[i]));
+        newHTML.push(escapeHTML(b[j]));
+        i++; j++;
+      } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+        oldHTML.push(`<del>${escapeHTML(a[i])}</del>`);
+        i++;
+      } else {
+        newHTML.push(`<ins>${escapeHTML(b[j])}</ins>`);
+        j++;
+      }
+    }
+    while (i < m) { oldHTML.push(`<del>${escapeHTML(a[i])}</del>`); i++; }
+    while (j < n) { newHTML.push(`<ins>${escapeHTML(b[j])}</ins>`); j++; }
+
+    return { oldHTML: oldHTML.join(''), newHTML: newHTML.join('') };
+  }
+
+  // ============ ① 论文降重 ============
+  document.getElementById('reduce-submit').addEventListener('click', async () => {
+    const input = document.getElementById('reduce-input');
+    const text = input.value.trim();
+    showError('reduce', '');
+    markInputError(input, false);
+
+    if (!text) {
+      markInputError(input, true);
+      showError('reduce', '请输入需要降重的文字');
+      return;
+    }
+
+    setLoading('reduce', true);
+
+    try {
+      const content = await callAPI([
+        { role: 'system', content: '你是学术写作降重助手。请改写用户输入的文字，保持语义不变但降低与原文的字面相似度，使其更像原创表达。改写时必须保留所有专业术语、数据、引用（如文献标注、数字编号）和专有名词，不得替换或删改。请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"rewritten": "改写后的文本", "reduction_percent": 数字, "replaced_count": 数字}，其中 reduction_percent 是你估算的重复率降低百分比（0-100 的整数），replaced_count 是你替换的关键表达处数。' },
+        { role: 'user', content: text },
+      ]);
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        document.getElementById('reduce-original').textContent = text;
+        document.getElementById('reduce-rewritten').textContent = content;
+        document.getElementById('reduce-percent').style.display = 'none';
+        document.getElementById('reduce-output').style.display = 'block';
+        return;
+      }
+
+      const { oldHTML, newHTML } = diffWords(text, result.rewritten || '');
+      document.getElementById('reduce-original').innerHTML = oldHTML;
+      document.getElementById('reduce-rewritten').innerHTML = newHTML;
+      const percentEl = document.getElementById('reduce-percent');
+      percentEl.style.display = 'inline-block';
+      percentEl.textContent = `预计重复率降低 ${result.reduction_percent ?? '?'}%（替换了${result.replaced_count ?? '?'}处关键表达）`;
+      document.getElementById('reduce-output').style.display = 'block';
+    } catch (e) {
+      showError('reduce', e.message);
+    } finally {
+      setLoading('reduce', false);
+    }
+  });
+
+  // ============ ② 学术润色 ============
+  document.getElementById('polish-submit').addEventListener('click', async () => {
+    const input = document.getElementById('polish-input');
+    const text = input.value.trim();
+    const level = document.getElementById('polish-level').value;
+    showError('polish', '');
+    markInputError(input, false);
+
+    if (!text) {
+      markInputError(input, true);
+      showError('polish', '请输入需要润色的文字');
+      return;
+    }
+
+    setLoading('polish', true);
+
+    try {
+      const content = await callAPI([
+        { role: 'system', content: `你是学术写作润色助手。请将用户输入的口语化或不规范表达，按照"${level}"强度改写为学术规范表达。
+
+三档强度定义如下：
+- 轻度：仅修正语法错误和明显用词不当，不改变句式结构。
+- 标准：调整句式、将口语化词汇替换为学术用语，但保持原段落的逻辑结构不变。
+- 严格：可重构段落的逻辑和论证结构，大幅提升整体的学术规范性。
+
+无论选择哪一档强度，都不得改变原文中的数据、引用（如文献标注、数字编号）和专有名词。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"polished": "润色后的完整文本", "changes": [{"original": "原始片段", "revised": "修改后片段", "reason": "修改理由"}]}，changes 中的 revised 片段必须能在 polished 文本中精确找到。` },
+        { role: 'user', content: text },
+      ]);
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        document.getElementById('polish-result').textContent = content;
+        document.getElementById('polish-output').style.display = 'block';
+        return;
+      }
+
+      let html = escapeHTML(result.polished || '');
+      (result.changes || []).forEach((change, idx) => {
+        const revised = escapeHTML(change.revised || '');
+        if (!revised) return;
+        const marker = `__CHANGE_${idx}__`;
+        if (html.includes(revised)) {
+          html = html.replace(revised, marker);
+        }
+        html = html.split(marker).join(
+          `<span class="change-mark">${revised}<span class="tooltip">${escapeHTML(change.reason || '')}</span></span>`
+        );
+      });
+
+      document.getElementById('polish-result').innerHTML = html;
+      document.getElementById('polish-output').style.display = 'block';
+    } catch (e) {
+      showError('polish', e.message);
+    } finally {
+      setLoading('polish', false);
+    }
+  });
+
+  // ============ ③ 摘要生成 ============
+  document.getElementById('summary-submit').addEventListener('click', async () => {
+    const input = document.getElementById('summary-input');
+    const text = input.value.trim();
+    const length = document.getElementById('summary-length').value;
+    const lang = document.getElementById('summary-lang').value;
+    showError('summary', '');
+    markInputError(input, false);
+
+    if (!text) {
+      markInputError(input, true);
+      showError('summary', '请输入需要生成摘要的正文');
+      return;
+    }
+
+    setLoading('summary', true);
+
+    try {
+      const content = await callAPI([
+        { role: 'system', content: `你是学术写作助手。请根据用户提供的正文，生成一段使用${lang}撰写的学术摘要，目标字数约为 ${length} 字，但这只是上限参考。
+
+摘要结构应遵循学术三段式：研究问题 → 方法/内容 → 结论/意义。
+
+如果原文字数少于目标字数的 2 倍，说明原文信息量不足以支撑完整长度的摘要，此时摘要字数应自动缩减为原文字数的 40%~50%，不得强行扩写到接近 ${length} 字。严禁为了凑字数而添加原文中没有的内容、重复表述、套话或空话。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"summary": "摘要内容"}。` },
+        { role: 'user', content: text },
+      ]);
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        result = { summary: content };
+      }
+
+      document.getElementById('summary-result').textContent = result.summary || '';
+      document.getElementById('summary-output').style.display = 'block';
+    } catch (e) {
+      showError('summary', e.message);
+    } finally {
+      setLoading('summary', false);
+    }
+  });
+
+  document.getElementById('summary-copy').addEventListener('click', () => {
+    const text = document.getElementById('summary-result').textContent;
+    navigator.clipboard.writeText(text);
+  });
+
+  // ============ ④ 跨文化翻译润色 ============
+  document.getElementById('translate-submit').addEventListener('click', async () => {
+    const input = document.getElementById('translate-input');
+    const text = input.value.trim();
+    const lang = document.getElementById('translate-lang').value;
+    const scene = document.getElementById('translate-scene').value;
+    showError('translate', '');
+    markInputError(input, false);
+
+    if (!text) {
+      markInputError(input, true);
+      showError('translate', '请输入需要翻译的内容');
+      return;
+    }
+
+    setLoading('translate', true);
+
+    try {
+      const content = await callAPI([
+        { role: 'system', content: `你是跨文化翻译润色助手。请将用户输入的中文内容翻译为${lang}，符合"${scene}"场景下的地道表达习惯。
+
+场景要求：
+- 若场景为"学术"：译文必须严格避免口语化缩写形式（如 don't→do not，can't→cannot，it's→it is，以此类推），用词正式规范。
+- 若场景为"商务"：语气正式但不生硬，避免使用过度客套或夸张的措辞。
+- 若场景为"社交"：可使用自然、友好的日常表达。
+
+同时请提供文化注意事项：若有多个值得注意的点，最多列出两条，按重要性从高到低排列；若只有一条重要的，则只输出一条。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"translation": "译文", "cultural_note": "文化注意事项（最多两条，可用换行或编号分隔）"}。` },
+        { role: 'user', content: text },
+      ]);
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        result = { translation: content, cultural_note: '' };
+      }
+
+      document.getElementById('translate-result').textContent = result.translation || '';
+      document.getElementById('translate-culture').textContent = result.cultural_note || '（无）';
+      document.getElementById('translate-output').style.display = 'block';
+    } catch (e) {
+      showError('translate', e.message);
+    } finally {
+      setLoading('translate', false);
+    }
+  });
+
+  // ============ ⑤ 参考文献格式化 ============
+  document.getElementById('reference-submit').addEventListener('click', async () => {
+    const input = document.getElementById('reference-input');
+    const text = input.value.trim();
+    const format = document.getElementById('reference-format').value;
+    showError('reference', '');
+    markInputError(input, false);
+
+    if (!text) {
+      markInputError(input, true);
+      showError('reference', '请输入需要格式化的参考文献');
+      return;
+    }
+
+    setLoading('reference', true);
+
+    try {
+      const content = await callAPI([
+        { role: 'system', content: `你是参考文献格式化助手。用户会输入多条参考文献（每行一条），请将每条按照 "${format}" 格式规范化。
+
+对每一条文献，请仔细检查该格式（${format}）所要求的必填字段是否完整，包括但不限于：作者（姓名是否完整、形式是否符合该格式要求）、出版/发表年份、标题、出版物/期刊/出版社名称、出版地、卷期号/页码、DOI/URL（如适用）等。只要原文中缺失或信息不完整的字段，都必须在 warnings 中逐条列出并说明缺少什么；不要因为能够拼出一个看似完整的格式化结果就省略警告——格式化结果中你为缺失字段留空或省略的部分，必须对应一条 warning。只有当原始输入确实包含该格式要求的全部必填字段时，warnings 才能为空数组。
+
+具体规则（必须严格执行）：
+- 若作者名为单字（如"王五"）或无法识别为完整姓名格式（如缺少姓或名、只有姓氏缩写等），必须警告："作者名疑似不完整，建议补充全名"。
+- 若缺少出版地信息，必须警告："缺少出版地信息"。
+- 若缺少出版社或期刊名称，必须警告："缺少出版社/期刊信息"。
+- 总原则：宁可多警告，不能漏警告。任何字段只要存在疑问、不确定、格式不规范或可能缺失，都必须列出对应的 warning，不得因为"大概率没问题"而省略。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"items": [{"formatted": "格式化后的文献条目", "warnings": ["缺失或不规范字段说明", "..."]}]}，items 数组顺序需与输入顺序一致。` },
+        { role: 'user', content: text },
+      ]);
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        document.getElementById('reference-list').innerHTML = `<div class="ref-item">${escapeHTML(content)}</div>`;
+        document.getElementById('reference-output').style.display = 'block';
+        return;
+      }
+
+      const items = result.items || [];
+      const html = items.map(item => {
+        const warnings = (item.warnings || [])
+          .map(w => `<div class="ref-warning">⚠ ${escapeHTML(w)}</div>`)
+          .join('');
+        return `<div class="ref-item"><div>${escapeHTML(item.formatted || '')}</div>${warnings}</div>`;
+      }).join('');
+
+      document.getElementById('reference-list').innerHTML = html || '<div class="ref-item">未返回结果</div>';
+      document.getElementById('reference-output').style.display = 'block';
+
+      // 缓存纯文本，供"一键复制全部"使用
+      document.getElementById('reference-output').dataset.plain = items.map(i => i.formatted || '').join('\n\n');
+    } catch (e) {
+      showError('reference', e.message);
+    } finally {
+      setLoading('reference', false);
+    }
+  });
+
+  document.getElementById('reference-copy').addEventListener('click', () => {
+    const text = document.getElementById('reference-output').dataset.plain || '';
+    navigator.clipboard.writeText(text);
+  });
+</script>
+
+</body>
+</html>
