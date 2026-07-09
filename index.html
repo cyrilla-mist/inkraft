@@ -224,6 +224,27 @@
     color: var(--text-secondary);
   }
 
+  .input-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .input-meta .warning {
+    color: var(--accent);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
   .btn {
     background: var(--accent);
     color: #1a1a2e;
@@ -442,6 +463,86 @@
   .copy-btn {
     margin-top: 10px;
   }
+
+  /* ===== Streaming preview ===== */
+  .loading-label {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .stream-preview {
+    margin: 10px 0 0;
+    max-height: 240px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    line-height: 1.6;
+  }
+
+  .stream-preview:empty { display: none; }
+
+  .stream-preview::after {
+    content: '▍';
+    color: var(--accent);
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* ===== 关键词标签 ===== */
+  .keyword-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .keyword-tag {
+    background: rgba(201, 169, 110, 0.12);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+  }
+
+  /* ===== 全套处理 ===== */
+  .combo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .combo-grid { grid-template-columns: 1fr; }
+
+    .btn-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-row .btn {
+      width: 100%;
+    }
+  }
+
+  .combo-card h2 {
+    font-size: 1.05rem;
+  }
+
+  .combo-card .col-content {
+    font-size: 0.9rem;
+  }
 </style>
 </head>
 <body>
@@ -455,7 +556,9 @@
 
 <div class="tab-nav-wrapper">
   <nav class="tab-nav" id="tabNav">
-    <button class="tab-btn active" data-tab="reduce">降重</button>
+    <button class="tab-btn active" data-tab="combo">全套处理</button>
+    <button class="tab-btn" data-tab="check">论文体检</button>
+    <button class="tab-btn" data-tab="reduce">降重</button>
     <button class="tab-btn" data-tab="polish">学术润色</button>
     <button class="tab-btn" data-tab="summary">摘要生成</button>
     <button class="tab-btn" data-tab="translate">翻译润色</button>
@@ -466,15 +569,93 @@
 
 <main>
 
+  <!-- ⓪ 全套处理 -->
+  <section class="panel active" id="panel-combo">
+    <div class="card">
+      <h2>全套处理</h2>
+      <textarea id="combo-input" rows="6" placeholder="粘贴文字，一键完成降重 / 学术润色 / 摘要生成"></textarea>
+      <button class="btn" id="combo-submit">开始全套处理</button>
+      <div id="combo-error"></div>
+    </div>
+    <div class="combo-grid">
+      <div class="card combo-card">
+        <h2>降重结果</h2>
+        <div class="loading-label" id="combo-reduce-loading" style="display:none;">
+          <span class="spinner"></span>正在改写中...
+        </div>
+        <pre class="stream-preview" id="combo-reduce-stream"></pre>
+        <div class="output-area" id="combo-reduce-output" style="display:none;">
+          <div class="col-content" id="combo-reduce-content"></div>
+          <div class="reduction-badge" id="combo-reduce-percent"></div>
+        </div>
+        <div id="combo-reduce-error"></div>
+      </div>
+      <div class="card combo-card">
+        <h2>学术润色结果</h2>
+        <div class="loading-label" id="combo-polish-loading" style="display:none;">
+          <span class="spinner"></span>正在润色中...
+        </div>
+        <pre class="stream-preview" id="combo-polish-stream"></pre>
+        <div class="output-area" id="combo-polish-output" style="display:none;">
+          <div class="col-content" id="combo-polish-content"></div>
+        </div>
+        <div id="combo-polish-error"></div>
+      </div>
+      <div class="card combo-card">
+        <h2>摘要（100字）</h2>
+        <div class="loading-label" id="combo-summary-loading" style="display:none;">
+          <span class="spinner"></span>正在生成中...
+        </div>
+        <pre class="stream-preview" id="combo-summary-stream"></pre>
+        <div class="output-area" id="combo-summary-output" style="display:none;">
+          <div class="col-content" id="combo-summary-content"></div>
+          <div class="keyword-tags" id="combo-summary-keywords"></div>
+        </div>
+        <div id="combo-summary-error"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ① 论文体检 -->
+  <section class="panel" id="panel-check">
+    <div class="card">
+      <h2>论文体检</h2>
+      <p class="col-content">粘贴论文片段，检测学术表达、逻辑衔接、查重风险与 AI 写作痕迹，并给出修改优先级建议。</p>
+      <textarea id="check-input" rows="8" placeholder="粘贴需要体检的论文片段"></textarea>
+      <div class="input-meta">
+        <span id="check-count">当前输入：0 字</span>
+        <span>建议范围：50 - 3000 字</span>
+        <span id="check-length-tip" class="warning"></span>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="check-submit">开始体检</button>
+        <button class="btn btn-secondary" id="check-clear">清空</button>
+      </div>
+      <div id="check-error"></div>
+      <div id="check-loading" class="output-area" style="display:none;">
+        <div class="loading-label"><span class="spinner"></span>正在体检中...</div>
+        <pre class="stream-preview" id="check-stream"></pre>
+      </div>
+      <div class="output-area" id="check-output" style="display:none;">
+        <div class="col-box">
+          <h3>体检结果</h3>
+          <div class="col-content" id="check-result"></div>
+        </div>
+        <button class="btn btn-secondary copy-btn" id="check-copy">复制体检结果</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ① 论文降重 -->
-  <section class="panel active" id="panel-reduce">
+  <section class="panel" id="panel-reduce">
     <div class="card">
       <h2>论文降重</h2>
       <textarea id="reduce-input" rows="6" placeholder="粘贴需要降重的文字"></textarea>
       <button class="btn" id="reduce-submit">开始降重</button>
       <div id="reduce-error"></div>
       <div id="reduce-loading" class="output-area" style="display:none;">
-        <span class="spinner"></span>正在改写中...
+        <div class="loading-label"><span class="spinner"></span>正在改写中...</div>
+        <pre class="stream-preview" id="reduce-stream"></pre>
       </div>
       <div class="output-area" id="reduce-output" style="display:none;">
         <div class="two-col">
@@ -510,7 +691,8 @@
       <button class="btn" id="polish-submit">开始润色</button>
       <div id="polish-error"></div>
       <div id="polish-loading" class="output-area" style="display:none;">
-        <span class="spinner"></span>正在润色中...
+        <div class="loading-label"><span class="spinner"></span>正在润色中...</div>
+        <pre class="stream-preview" id="polish-stream"></pre>
       </div>
       <div class="output-area" id="polish-output" style="display:none;">
         <div class="col-box">
@@ -546,12 +728,14 @@
       <button class="btn" id="summary-submit">生成摘要</button>
       <div id="summary-error"></div>
       <div id="summary-loading" class="output-area" style="display:none;">
-        <span class="spinner"></span>正在生成中...
+        <div class="loading-label"><span class="spinner"></span>正在生成中...</div>
+        <pre class="stream-preview" id="summary-stream"></pre>
       </div>
       <div class="output-area" id="summary-output" style="display:none;">
         <div class="col-box">
           <h3>摘要</h3>
           <div class="col-content" id="summary-result"></div>
+          <div class="keyword-tags" id="summary-keywords"></div>
         </div>
         <button class="btn btn-secondary copy-btn" id="summary-copy">一键复制</button>
       </div>
@@ -585,7 +769,8 @@
       <button class="btn" id="translate-submit">开始翻译</button>
       <div id="translate-error"></div>
       <div id="translate-loading" class="output-area" style="display:none;">
-        <span class="spinner"></span>正在翻译中...
+        <div class="loading-label"><span class="spinner"></span>正在翻译中...</div>
+        <pre class="stream-preview" id="translate-stream"></pre>
       </div>
       <div class="output-area" id="translate-output" style="display:none;">
         <div class="col-box">
@@ -618,7 +803,8 @@
       <button class="btn" id="reference-submit">开始格式化</button>
       <div id="reference-error"></div>
       <div id="reference-loading" class="output-area" style="display:none;">
-        <span class="spinner"></span>正在格式化中...
+        <div class="loading-label"><span class="spinner"></span>正在格式化中...</div>
+        <pre class="stream-preview" id="reference-stream"></pre>
       </div>
       <div class="output-area" id="reference-output" style="display:none;">
         <div class="col-box">
@@ -683,34 +869,80 @@
   window.addEventListener('resize', () => moveIndicator(document.querySelector('.tab-btn.active')));
 
   // ============ 通用工具函数 ============
-  async function callAPI(messages) {
+  // 流式调用：messages -> 完整文本；onDelta(deltaText, fullText) 在每个 chunk 到达时调用
+  async function streamAPI(messages, onDelta) {
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, stream: true }),
     });
 
-    let data;
-    try {
-      data = await res.json();
-    } catch (e) {
-      throw new Error('服务器返回格式错误');
-    }
-
     if (!res.ok) {
-      throw new Error(data.error || `请求失败（${res.status}）`);
+      let data;
+      try { data = await res.json(); } catch (e) {}
+      throw new Error((data && data.error) || `请求失败（${res.status}）`);
     }
 
-    if (data.error) throw new Error(data.error);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let full = '';
 
-    return data.content;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const dataStr = trimmed.slice(5).trim();
+        if (dataStr === '[DONE]') continue;
+
+        let json;
+        try {
+          json = JSON.parse(dataStr);
+        } catch (e) {
+          console.error('[streamAPI] 解析 SSE 数据块失败：', dataStr, e);
+          continue;
+        }
+
+        if (json.error) {
+          throw new Error(json.error.message || JSON.stringify(json.error));
+        }
+
+        const delta = json.choices?.[0]?.delta?.content;
+        if (delta) {
+          full += delta;
+          if (onDelta) onDelta(delta, full);
+        }
+      }
+    }
+
+    if (!full) {
+      console.warn('[streamAPI] 未收到任何内容，请检查 Worker 是否正常转发了 stream 响应');
+    }
+
+    return full;
   }
 
-  // 提取 AI 返回内容中的 JSON（兼容 ```json 代码块包裹）
+  // 提取 AI 返回内容中的 JSON（兼容 ```json 代码块包裹，以及前后多余的说明文字）
   function extractJSON(text) {
-    let cleaned = text.trim();
-    const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+    let cleaned = (text || '').trim();
+
+    // 去掉 ```json ... ``` 或 ``` ... ``` 代码块包裹
+    const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
     if (fenceMatch) cleaned = fenceMatch[1].trim();
+
+    // 去掉代码块/说明文字之外的多余内容，只保留第一个 { 到最后一个 } 之间的部分
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+      cleaned = cleaned.slice(start, end + 1);
+    }
+
     return JSON.parse(cleaned);
   }
 
@@ -724,7 +956,11 @@
   function setLoading(prefix, isLoading) {
     document.getElementById(`${prefix}-loading`).style.display = isLoading ? 'block' : 'none';
     document.getElementById(`${prefix}-submit`).disabled = isLoading;
-    if (isLoading) document.getElementById(`${prefix}-output`).style.display = 'none';
+    if (isLoading) {
+      document.getElementById(`${prefix}-output`).style.display = 'none';
+      const stream = document.getElementById(`${prefix}-stream`);
+      if (stream) stream.textContent = '';
+    }
   }
 
   function showError(prefix, message) {
@@ -771,6 +1007,242 @@
     return { oldHTML: oldHTML.join(''), newHTML: newHTML.join('') };
   }
 
+  // ============ Prompt 定义 ============
+  const REDUCE_PROMPT = `你是一个学术文本重组专家。将以下文字进行句式多样化处理，要求：
+1. 严格禁止单纯替换同义词
+2. 优先拆分长句为多个短句，或将短句合并重组
+3. 改变句子结构：陈述句改分析句，被动改主动（或反过来）
+4. 重新组织段落内的逻辑顺序，打散原有语流
+5. 将"进行XX"类名词化表达改为动词化表达
+6. 保留所有专业术语、数据、引用、人名、地名不变
+7. 改写后语义必须与原文完全一致
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"rewritten": "改写后的文本", "reduction_percent": 数字, "changes_count": 数字}，其中 reduction_percent 是你估算的重复率降低百分比（0-100 的整数），changes_count 是句式结构调整的处数。`;
+
+  function getPolishPrompt(level) {
+    return `你是学术写作润色助手。请将用户输入的口语化或不规范表达，按照"${level}"强度改写为学术规范表达。
+
+三档强度定义如下：
+- 轻度：只修正语法错误和明显口语词，不改变句式和段落结构。
+- 标准：在轻度基础上，将口语化句式改写为学术句式，把主观表达替换为客观表达，统一学术用语风格。
+- 严格：在标准基础上，重构段落的论证逻辑，补充必要的学术连接词，将段落改写为"论点—依据—结论"三段式结构。
+
+所有强度均不得改动原文中的数据、引用（如文献标注、数字编号）和专有名词。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"polished": "润色后的完整文本", "changes": [{"original": "原始片段", "revised": "修改后片段", "reason": "修改理由"}]}，changes 中的 revised 片段必须能在 polished 文本中精确找到。`;
+  }
+
+  function getSummaryPrompt(length, lang) {
+    return `你是学术写作助手。请根据用户提供的正文，生成一段使用${lang}撰写的学术摘要，目标字数约为 ${length} 字，但这只是上限参考。
+
+摘要结构应遵循学术三段式：研究问题 → 方法/内容 → 结论/意义。
+
+如果原文字数少于目标字数的 2 倍，说明原文信息量不足以支撑完整长度的摘要，此时摘要字数应自动缩减为原文字数的 40%~50%，不得强行扩写到接近 ${length} 字。严禁为了凑字数而添加原文中没有的内容、重复表述、套话或空话。
+
+同时请从正文中提取 3-5 个关键词。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"summary": "摘要内容", "keywords": ["关键词1", "关键词2", "..."]}。`;
+  }
+
+  function getTranslatePrompt(lang, scene) {
+    return `你是跨文化翻译润色助手。请将用户输入的中文内容翻译为${lang}，符合"${scene}"场景下的地道表达习惯。
+
+场景要求：
+- 若场景为"学术"：译文中所有缩写形式一律展开（如 don't→do not，can't→cannot，it's→it is，以此类推），用词正式规范。
+- 若场景为"商务"：语气正式但不生硬，避免使用过度客套或夸张的措辞。
+- 若场景为"社交"：可使用自然、友好的日常表达。
+
+同时请提供文化注意事项，要求：
+- 必须给出与本次翻译内容直接相关的具体例子（例如某个词/表达在目标语言文化中的具体含义、用法差异或可能引起的误解），严禁输出"注意正式程度"、"注意文化差异"等没有实质内容的空泛表述。
+- 最多列出两条，按重要性从高到低排列；若只有一条值得注意的，则只输出一条。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"translation": "译文", "cultural_note": "文化注意事项（最多两条，附具体例子，可用换行或编号分隔）"}。`;
+  }
+
+  function getReferencePrompt(format) {
+    return `你是参考文献格式化助手。用户会输入多条参考文献（每行一条），请将每条按照 "${format}" 格式规范化。
+
+总原则：宁可少报，不能误报。只对确认存在问题的字段发出警告，不要捕风捉影或臆测。
+
+具体规则：
+- 若作者名为单字（如"王五"）或明显无法识别为完整姓名格式，必须警告："作者名疑似不完整，建议补充全名"。
+- 若某个该格式必填的字段（如出版地、出版社/期刊、年份、标题等）在原文中确实缺失，必须警告并说明缺少什么。
+- 对于无法从原文中补全的字段，在 formatted 结果中用 "[信息缺失]" 标注该位置，不得自行编造或猜测填充。
+- 如果某条文献信息完整、格式规范，warnings 应为空数组，不要为了"显得仔细"而无理由地添加警告。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"items": [{"formatted": "格式化后的文献条目", "warnings": ["缺失或不规范字段说明", "..."]}]}，items 数组顺序需与输入顺序一致。`;
+  }
+
+  const CHECK_PROMPT = `你是一个面向大学生中文论文写作的审阅助手。你的任务不是直接替用户写论文，而是帮助用户诊断论文片段中可能存在的问题。
+
+请从以下五个方面审阅：
+1. 学术表达问题：指出过于口语化、主观化、空泛或不够准确的表达。
+2. 逻辑衔接问题：指出论证是否跳跃、因果是否不足、前后是否缺少过渡。
+3. 查重风险句：指出高频论文套话、教材式表达或常见模板句，但必须使用“可能存在重复风险”等非绝对表述。
+4. AIGC 味较重表达：指出模板化、泛泛而谈、缺少具体对象或依据的表达，但不要断言文本一定由 AI 生成。
+5. 修改优先级建议：告诉用户先改什么、后改什么。
+
+重要原则：
+- 不要编造原文没有的数据、文献、案例或结论。
+- 不要代拟原文没有出现的具体工具名、年份、比例、时间、案例或文献。
+- 可以建议用户补充“具体工具、具体环节、具体依据”，但不要替用户虚构这些内容。
+- 不要使用“如”“例如”“比如”来引出模型自己编造的具体名称、数据、案例或文献。
+- 如果需要举例，只能引用用户原文中已经出现的词句；否则请使用“建议结合原文实际研究对象补充真实依据”这类提示。
+- 不要直接替用户整段重写。
+- 不要做绝对化判断。
+- 如果问题不明显，请说明“暂未发现明显问题”。
+- 语言要具体、可操作，适合大学生根据建议继续修改。
+- 输出必须直接从【学术表达问题】开始，不要寒暄、不要确认收到了请求、不要添加分隔线或额外说明。
+- 每条建议都应基于原文已有内容；若需要新增事实依据，只能提示“建议补充原文依据或真实材料”，不能直接给出虚构示例。
+- 输出前必须自检：删除所有原文没有出现的括号示例、XX% 占位数据、自拟研究方法、自拟理论框架、自拟工具名和自拟案例。
+- 当你想写“如/例如/比如 + 具体内容”时，改写为“建议结合原文实际研究对象补充真实材料”。
+- 不要给出替换后的完整句子，只指出问题位置、问题原因和修改方向。
+- 不要为了填满五个部分而强行挑错。若文本整体较规范、某类问题不明显，该部分只输出“暂未发现明显问题。”
+- 对相对规范的文本，应重点指出少量真实存在的问题；不要把所有通用优化方向都写成问题。
+
+禁止使用以下绝对化表述：
+- 这句话一定会查重
+- 这句话就是 AI 写的
+- 这段逻辑完全错误
+
+应使用更稳妥的表达，例如：
+- 可能存在表达重复风险
+- 具有模板化表达特征
+- 论证衔接不足
+- 建议结合上下文人工复核
+
+请严格按以下格式输出：
+
+【学术表达问题】
+- ...
+
+【逻辑衔接问题】
+- ...
+
+【查重风险句】
+- ...
+
+【AIGC 味较重表达】
+- ...
+
+【修改优先级建议】
+1. ...
+2. ...
+3. ...`;
+
+  // ============ 共用渲染函数 ============
+  function formatReductionBadge(result) {
+    return `预计重复率降低 ${result.reduction_percent ?? '?'}%（共调整 ${result.changes_count ?? '?'} 处句式）`;
+  }
+
+  // 将 polish 结果渲染为带下划线 + hover 提示的 HTML
+  function renderPolishHTML(result) {
+    let html = escapeHTML(result.polished || '');
+    (result.changes || []).forEach((change, idx) => {
+      const revised = escapeHTML(change.revised || '');
+      if (!revised) return;
+      const marker = `__CHANGE_${idx}__`;
+      if (html.includes(revised)) {
+        html = html.replace(revised, marker);
+      }
+      html = html.split(marker).join(
+        `<span class="change-mark">${revised}<span class="tooltip">${escapeHTML(change.reason || '')}</span></span>`
+      );
+    });
+    return html;
+  }
+
+  function renderKeywordTags(container, keywords) {
+    container.innerHTML = (keywords || [])
+      .map(k => `<span class="keyword-tag">${escapeHTML(k)}</span>`)
+      .join('');
+  }
+
+  // ============ ① 论文体检 ============
+  const checkInput = document.getElementById('check-input');
+  const checkCount = document.getElementById('check-count');
+  const checkLengthTip = document.getElementById('check-length-tip');
+  const checkCopyBtn = document.getElementById('check-copy');
+
+  function countTextChars(text) {
+    return (text || '').replace(/\s/g, '').length;
+  }
+
+  function updateCheckCount() {
+    const count = countTextChars(checkInput.value);
+    checkCount.textContent = `当前输入：${count} 字`;
+    checkLengthTip.textContent = count > 3000 ? '当前文本较长，建议分段体检，结果会更准确。' : '';
+  }
+
+  function resetCheckPanel() {
+    checkInput.value = '';
+    updateCheckCount();
+    showError('check', '');
+    markInputError(checkInput, false);
+    document.getElementById('check-stream').textContent = '';
+    document.getElementById('check-loading').style.display = 'none';
+    document.getElementById('check-output').style.display = 'none';
+    document.getElementById('check-result').textContent = '';
+    document.getElementById('check-submit').disabled = false;
+    checkCopyBtn.textContent = '复制体检结果';
+  }
+
+  checkInput.addEventListener('input', updateCheckCount);
+
+  document.getElementById('check-submit').addEventListener('click', async () => {
+    const text = checkInput.value.trim();
+    showError('check', '');
+    markInputError(checkInput, false);
+
+    if (!text) {
+      markInputError(checkInput, true);
+      showError('check', '请先粘贴需要体检的论文片段');
+      return;
+    }
+
+    setLoading('check', true);
+    const streamEl = document.getElementById('check-stream');
+
+    try {
+      const content = await streamAPI([
+        { role: 'system', content: CHECK_PROMPT },
+        { role: 'user', content: text },
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
+
+      document.getElementById('check-result').textContent = content || '暂未返回体检结果。';
+      document.getElementById('check-output').style.display = 'block';
+    } catch (e) {
+      showError('check', e.message);
+    } finally {
+      setLoading('check', false);
+    }
+  });
+
+  document.getElementById('check-clear').addEventListener('click', resetCheckPanel);
+
+  checkCopyBtn.addEventListener('click', () => {
+    const text = document.getElementById('check-result').textContent.trim();
+    if (!text) {
+      showError('check', '暂无可复制内容');
+      return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+      showError('check', '');
+      checkCopyBtn.textContent = '已复制';
+      setTimeout(() => {
+        checkCopyBtn.textContent = '复制体检结果';
+      }, 1500);
+    }).catch(() => {
+      showError('check', '复制失败，请手动选择结果文本复制');
+    });
+  });
+
+  updateCheckCount();
+
   // ============ ① 论文降重 ============
   document.getElementById('reduce-submit').addEventListener('click', async () => {
     const input = document.getElementById('reduce-input');
@@ -785,17 +1257,22 @@
     }
 
     setLoading('reduce', true);
+    const streamEl = document.getElementById('reduce-stream');
 
     try {
-      const content = await callAPI([
-        { role: 'system', content: '你是学术写作降重助手。请改写用户输入的文字，保持语义不变但降低与原文的字面相似度，使其更像原创表达。改写时必须保留所有专业术语、数据、引用（如文献标注、数字编号）和专有名词，不得替换或删改。请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"rewritten": "改写后的文本", "reduction_percent": 数字, "replaced_count": 数字}，其中 reduction_percent 是你估算的重复率降低百分比（0-100 的整数），replaced_count 是你替换的关键表达处数。' },
+      const content = await streamAPI([
+        { role: 'system', content: REDUCE_PROMPT },
         { role: 'user', content: text },
-      ]);
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
 
       let result;
       try {
         result = extractJSON(content);
       } catch (e) {
+        console.error('[降重] JSON 解析失败，原始返回内容：', content, e);
         document.getElementById('reduce-original').textContent = text;
         document.getElementById('reduce-rewritten').textContent = content;
         document.getElementById('reduce-percent').style.display = 'none';
@@ -808,7 +1285,7 @@
       document.getElementById('reduce-rewritten').innerHTML = newHTML;
       const percentEl = document.getElementById('reduce-percent');
       percentEl.style.display = 'inline-block';
-      percentEl.textContent = `预计重复率降低 ${result.reduction_percent ?? '?'}%（替换了${result.replaced_count ?? '?'}处关键表达）`;
+      percentEl.textContent = formatReductionBadge(result);
       document.getElementById('reduce-output').style.display = 'block';
     } catch (e) {
       showError('reduce', e.message);
@@ -832,45 +1309,28 @@
     }
 
     setLoading('polish', true);
+    const streamEl = document.getElementById('polish-stream');
 
     try {
-      const content = await callAPI([
-        { role: 'system', content: `你是学术写作润色助手。请将用户输入的口语化或不规范表达，按照"${level}"强度改写为学术规范表达。
-
-三档强度定义如下：
-- 轻度：仅修正语法错误和明显用词不当，不改变句式结构。
-- 标准：调整句式、将口语化词汇替换为学术用语，但保持原段落的逻辑结构不变。
-- 严格：可重构段落的逻辑和论证结构，大幅提升整体的学术规范性。
-
-无论选择哪一档强度，都不得改变原文中的数据、引用（如文献标注、数字编号）和专有名词。
-
-请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"polished": "润色后的完整文本", "changes": [{"original": "原始片段", "revised": "修改后片段", "reason": "修改理由"}]}，changes 中的 revised 片段必须能在 polished 文本中精确找到。` },
+      const content = await streamAPI([
+        { role: 'system', content: getPolishPrompt(level) },
         { role: 'user', content: text },
-      ]);
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
 
       let result;
       try {
         result = extractJSON(content);
       } catch (e) {
+        console.error('[学术润色] JSON 解析失败，原始返回内容：', content, e);
         document.getElementById('polish-result').textContent = content;
         document.getElementById('polish-output').style.display = 'block';
         return;
       }
 
-      let html = escapeHTML(result.polished || '');
-      (result.changes || []).forEach((change, idx) => {
-        const revised = escapeHTML(change.revised || '');
-        if (!revised) return;
-        const marker = `__CHANGE_${idx}__`;
-        if (html.includes(revised)) {
-          html = html.replace(revised, marker);
-        }
-        html = html.split(marker).join(
-          `<span class="change-mark">${revised}<span class="tooltip">${escapeHTML(change.reason || '')}</span></span>`
-        );
-      });
-
-      document.getElementById('polish-result').innerHTML = html;
+      document.getElementById('polish-result').innerHTML = renderPolishHTML(result);
       document.getElementById('polish-output').style.display = 'block';
     } catch (e) {
       showError('polish', e.message);
@@ -895,27 +1355,27 @@
     }
 
     setLoading('summary', true);
+    const streamEl = document.getElementById('summary-stream');
 
     try {
-      const content = await callAPI([
-        { role: 'system', content: `你是学术写作助手。请根据用户提供的正文，生成一段使用${lang}撰写的学术摘要，目标字数约为 ${length} 字，但这只是上限参考。
-
-摘要结构应遵循学术三段式：研究问题 → 方法/内容 → 结论/意义。
-
-如果原文字数少于目标字数的 2 倍，说明原文信息量不足以支撑完整长度的摘要，此时摘要字数应自动缩减为原文字数的 40%~50%，不得强行扩写到接近 ${length} 字。严禁为了凑字数而添加原文中没有的内容、重复表述、套话或空话。
-
-请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"summary": "摘要内容"}。` },
+      const content = await streamAPI([
+        { role: 'system', content: getSummaryPrompt(length, lang) },
         { role: 'user', content: text },
-      ]);
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
 
       let result;
       try {
         result = extractJSON(content);
       } catch (e) {
-        result = { summary: content };
+        console.error('[摘要生成] JSON 解析失败，原始返回内容：', content, e);
+        result = { summary: content, keywords: [] };
       }
 
       document.getElementById('summary-result').textContent = result.summary || '';
+      renderKeywordTags(document.getElementById('summary-keywords'), result.keywords);
       document.getElementById('summary-output').style.display = 'block';
     } catch (e) {
       showError('summary', e.message);
@@ -945,26 +1405,22 @@
     }
 
     setLoading('translate', true);
+    const streamEl = document.getElementById('translate-stream');
 
     try {
-      const content = await callAPI([
-        { role: 'system', content: `你是跨文化翻译润色助手。请将用户输入的中文内容翻译为${lang}，符合"${scene}"场景下的地道表达习惯。
-
-场景要求：
-- 若场景为"学术"：译文必须严格避免口语化缩写形式（如 don't→do not，can't→cannot，it's→it is，以此类推），用词正式规范。
-- 若场景为"商务"：语气正式但不生硬，避免使用过度客套或夸张的措辞。
-- 若场景为"社交"：可使用自然、友好的日常表达。
-
-同时请提供文化注意事项：若有多个值得注意的点，最多列出两条，按重要性从高到低排列；若只有一条重要的，则只输出一条。
-
-请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"translation": "译文", "cultural_note": "文化注意事项（最多两条，可用换行或编号分隔）"}。` },
+      const content = await streamAPI([
+        { role: 'system', content: getTranslatePrompt(lang, scene) },
         { role: 'user', content: text },
-      ]);
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
 
       let result;
       try {
         result = extractJSON(content);
       } catch (e) {
+        console.error('[翻译润色] JSON 解析失败，原始返回内容：', content, e);
         result = { translation: content, cultural_note: '' };
       }
 
@@ -993,27 +1449,22 @@
     }
 
     setLoading('reference', true);
+    const streamEl = document.getElementById('reference-stream');
 
     try {
-      const content = await callAPI([
-        { role: 'system', content: `你是参考文献格式化助手。用户会输入多条参考文献（每行一条），请将每条按照 "${format}" 格式规范化。
-
-对每一条文献，请仔细检查该格式（${format}）所要求的必填字段是否完整，包括但不限于：作者（姓名是否完整、形式是否符合该格式要求）、出版/发表年份、标题、出版物/期刊/出版社名称、出版地、卷期号/页码、DOI/URL（如适用）等。只要原文中缺失或信息不完整的字段，都必须在 warnings 中逐条列出并说明缺少什么；不要因为能够拼出一个看似完整的格式化结果就省略警告——格式化结果中你为缺失字段留空或省略的部分，必须对应一条 warning。只有当原始输入确实包含该格式要求的全部必填字段时，warnings 才能为空数组。
-
-具体规则（必须严格执行）：
-- 若作者名为单字（如"王五"）或无法识别为完整姓名格式（如缺少姓或名、只有姓氏缩写等），必须警告："作者名疑似不完整，建议补充全名"。
-- 若缺少出版地信息，必须警告："缺少出版地信息"。
-- 若缺少出版社或期刊名称，必须警告："缺少出版社/期刊信息"。
-- 总原则：宁可多警告，不能漏警告。任何字段只要存在疑问、不确定、格式不规范或可能缺失，都必须列出对应的 warning，不得因为"大概率没问题"而省略。
-
-请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"items": [{"formatted": "格式化后的文献条目", "warnings": ["缺失或不规范字段说明", "..."]}]}，items 数组顺序需与输入顺序一致。` },
+      const content = await streamAPI([
+        { role: 'system', content: getReferencePrompt(format) },
         { role: 'user', content: text },
-      ]);
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
 
       let result;
       try {
         result = extractJSON(content);
       } catch (e) {
+        console.error('[参考文献] JSON 解析失败，原始返回内容：', content, e);
         document.getElementById('reference-list').innerHTML = `<div class="ref-item">${escapeHTML(content)}</div>`;
         document.getElementById('reference-output').style.display = 'block';
         return;
@@ -1042,6 +1493,142 @@
   document.getElementById('reference-copy').addEventListener('click', () => {
     const text = document.getElementById('reference-output').dataset.plain || '';
     navigator.clipboard.writeText(text);
+  });
+
+  // ============ ⓪ 全套处理 ============
+  function setComboLoading(key, isLoading) {
+    document.getElementById(`combo-${key}-loading`).style.display = isLoading ? 'flex' : 'none';
+    if (isLoading) {
+      document.getElementById(`combo-${key}-output`).style.display = 'none';
+      const stream = document.getElementById(`combo-${key}-stream`);
+      stream.textContent = '';
+      stream.style.display = 'block';
+      showError(`combo-${key}`, '');
+    }
+  }
+
+  function setComboDone(key) {
+    document.getElementById(`combo-${key}-loading`).style.display = 'none';
+    document.getElementById(`combo-${key}-stream`).style.display = 'none';
+  }
+
+  async function runComboReduce(text) {
+    const streamEl = document.getElementById('combo-reduce-stream');
+    try {
+      const content = await streamAPI([
+        { role: 'system', content: REDUCE_PROMPT },
+        { role: 'user', content: text },
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        console.error('[全套-降重] JSON 解析失败，原始返回内容：', content, e);
+        document.getElementById('combo-reduce-content').textContent = content;
+        document.getElementById('combo-reduce-percent').style.display = 'none';
+        document.getElementById('combo-reduce-output').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('combo-reduce-content').textContent = result.rewritten || '';
+      const percentEl = document.getElementById('combo-reduce-percent');
+      percentEl.style.display = 'inline-block';
+      percentEl.textContent = formatReductionBadge(result);
+      document.getElementById('combo-reduce-output').style.display = 'block';
+    } catch (e) {
+      showError('combo-reduce', e.message);
+    } finally {
+      setComboDone('reduce');
+    }
+  }
+
+  async function runComboPolish(text) {
+    const streamEl = document.getElementById('combo-polish-stream');
+    try {
+      const content = await streamAPI([
+        { role: 'system', content: getPolishPrompt('标准') },
+        { role: 'user', content: text },
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        console.error('[全套-润色] JSON 解析失败，原始返回内容：', content, e);
+        document.getElementById('combo-polish-content').textContent = content;
+        document.getElementById('combo-polish-output').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('combo-polish-content').innerHTML = renderPolishHTML(result);
+      document.getElementById('combo-polish-output').style.display = 'block';
+    } catch (e) {
+      showError('combo-polish', e.message);
+    } finally {
+      setComboDone('polish');
+    }
+  }
+
+  async function runComboSummary(text) {
+    const streamEl = document.getElementById('combo-summary-stream');
+    try {
+      const content = await streamAPI([
+        { role: 'system', content: getSummaryPrompt('100', '中文') },
+        { role: 'user', content: text },
+      ], (delta, full) => {
+        streamEl.textContent = full;
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
+
+      let result;
+      try {
+        result = extractJSON(content);
+      } catch (e) {
+        console.error('[全套-摘要] JSON 解析失败，原始返回内容：', content, e);
+        result = { summary: content, keywords: [] };
+      }
+
+      document.getElementById('combo-summary-content').textContent = result.summary || '';
+      renderKeywordTags(document.getElementById('combo-summary-keywords'), result.keywords);
+      document.getElementById('combo-summary-output').style.display = 'block';
+    } catch (e) {
+      showError('combo-summary', e.message);
+    } finally {
+      setComboDone('summary');
+    }
+  }
+
+  document.getElementById('combo-submit').addEventListener('click', async () => {
+    const input = document.getElementById('combo-input');
+    const text = input.value.trim();
+    showError('combo', '');
+    markInputError(input, false);
+
+    if (!text) {
+      markInputError(input, true);
+      showError('combo', '请输入需要处理的文字');
+      return;
+    }
+
+    const submitBtn = document.getElementById('combo-submit');
+    submitBtn.disabled = true;
+
+    ['reduce', 'polish', 'summary'].forEach(key => setComboLoading(key, true));
+
+    await Promise.all([
+      runComboReduce(text),
+      runComboPolish(text),
+      runComboSummary(text),
+    ]);
+
+    submitBtn.disabled = false;
   });
 </script>
 
