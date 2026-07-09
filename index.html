@@ -238,6 +238,13 @@
     color: var(--accent);
   }
 
+  .assistive-note {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 4px 0 12px;
+  }
+
   .btn-row {
     display: flex;
     gap: 12px;
@@ -639,6 +646,7 @@
       <div class="output-area" id="check-output" style="display:none;">
         <div class="col-box">
           <h3>体检结果</h3>
+          <p class="assistive-note">体检结果仅供辅助修改，最终请结合论文上下文和真实材料人工复核。</p>
           <div class="col-content" id="check-result"></div>
         </div>
         <button class="btn btn-secondary copy-btn" id="check-copy">复制体检结果</button>
@@ -1086,8 +1094,8 @@
 - 不要编造原文没有的数据、文献、案例或结论。
 - 不要代拟原文没有出现的具体工具名、年份、比例、时间、案例或文献。
 - 可以建议用户补充“具体工具、具体环节、具体依据”，但不要替用户虚构这些内容。
-- 不要使用“如”“例如”“比如”来引出模型自己编造的具体名称、数据、案例或文献。
-- 如果需要举例，只能引用用户原文中已经出现的词句；否则请使用“建议结合原文实际研究对象补充真实依据”这类提示。
+- 尽量避免使用“如”“例如”“比如”。如果确需举例，只能引用用户原文中已经出现的词句。
+- 需要提示补充方向时，直接使用“建议结合原文实际研究对象补充真实材料”或“建议结合论文上下文补充真实依据”等固定中性句式。
 - 不要直接替用户整段重写。
 - 不要做绝对化判断。
 - 如果问题不明显，请说明“暂未发现明显问题”。
@@ -1095,10 +1103,21 @@
 - 输出必须直接从【学术表达问题】开始，不要寒暄、不要确认收到了请求、不要添加分隔线或额外说明。
 - 每条建议都应基于原文已有内容；若需要新增事实依据，只能提示“建议补充原文依据或真实材料”，不能直接给出虚构示例。
 - 输出前必须自检：删除所有原文没有出现的括号示例、XX% 占位数据、自拟研究方法、自拟理论框架、自拟工具名和自拟案例。
-- 当你想写“如/例如/比如 + 具体内容”时，改写为“建议结合原文实际研究对象补充真实材料”。
+- 当你想写“如/例如/比如 + 具体内容”时，必须改写为固定中性句式，不要保留“如/例如/比如”。
 - 不要给出替换后的完整句子，只指出问题位置、问题原因和修改方向。
 - 不要为了填满五个部分而强行挑错。若文本整体较规范、某类问题不明显，该部分只输出“暂未发现明显问题。”
 - 对相对规范的文本，应重点指出少量真实存在的问题；不要把所有通用优化方向都写成问题。
+- 对整体较规范的文本，应降低挑错强度。只有当问题明显影响学术表达、逻辑衔接、重复风险或模板化程度时，才列为问题。
+- 对轻微可优化之处，应使用“可进一步优化”或“可结合上下文补充”的表述，不要归入明显问题。
+- 如果文本整体表达较规范，必须允许多个部分输出“暂未发现明显问题”。不要为了填满五个部分而强行挑错。
+- 查重风险句只标注明显高频套话、教材式模板句或高度泛化表达，不要把所有常见学术表达都判为重复风险。
+- AIGC 味较重表达只标注明显模板化、泛化、缺少具体对象或依据的表达。不要暗示文本一定由 AI 生成。
+- 描述 AIGC 风险时，优先使用“具有模板化表达特征”“具有泛化表达特征”“缺少具体对象或依据”等说法，不要使用偏定性的表述。
+- 禁止使用“如/例如/比如”引出原文没有出现的具体工具、课程、专业、数据、对比方式、研究环节、风险类型、政策措施、研究方法、案例或文献。
+- 如果需要提示补充内容，应使用“建议结合原文实际研究对象补充真实材料”或“建议结合论文上下文补充真实依据”等固定中性表达。
+- 可以指出“缺少中间论证”，但不要替用户预设中间论证的具体事实。
+- 不要把通用写作建议包装成原文已经存在的问题。
+- 修改优先级建议必须只针对前面已经指出的真实问题，不要新增新的问题方向。
 
 禁止使用以下绝对化表述：
 - 这句话一定会查重
@@ -1158,6 +1177,16 @@
       .join('');
   }
 
+  function sanitizeCheckOutput(text) {
+    return String(text || '')
+      .replace(/（(?:如|例如|比如)[^）]*）/g, '')
+      .replace(/\((?:如|例如|比如)[^)]*\)/g, '')
+      .replace(/，?(?:如|例如|比如)[^。；\n]*(?:。|；)?/g, '。建议结合论文上下文补充真实依据。')
+      .replace(/。。+/g, '。')
+      .replace(/[ \t]+([，。；：])/g, '$1')
+      .trim();
+  }
+
   // ============ ① 论文体检 ============
   const checkInput = document.getElementById('check-input');
   const checkCount = document.getElementById('check-count');
@@ -1171,7 +1200,13 @@
   function updateCheckCount() {
     const count = countTextChars(checkInput.value);
     checkCount.textContent = `当前输入：${count} 字`;
-    checkLengthTip.textContent = count > 3000 ? '当前文本较长，建议分段体检，结果会更准确。' : '';
+    if (count > 0 && count < 50) {
+      checkLengthTip.textContent = '当前文本较短，建议补充上下文，体检结果会更准确。';
+    } else if (count > 3000) {
+      checkLengthTip.textContent = '当前文本较长，建议分段体检，结果会更准确。';
+    } else {
+      checkLengthTip.textContent = '';
+    }
   }
 
   function resetCheckPanel() {
@@ -1212,7 +1247,7 @@
         streamEl.scrollTop = streamEl.scrollHeight;
       });
 
-      document.getElementById('check-result').textContent = content || '暂未返回体检结果。';
+      document.getElementById('check-result').textContent = sanitizeCheckOutput(content) || '暂未返回体检结果。';
       document.getElementById('check-output').style.display = 'block';
     } catch (e) {
       showError('check', e.message);
