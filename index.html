@@ -335,6 +335,13 @@
     .two-col { grid-template-columns: 1fr; }
   }
 
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
   .col-box {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -677,6 +684,21 @@
           </div>
         </div>
         <div class="reduction-badge" id="reduce-percent"></div>
+        <p class="assistive-note">质量检查仅供辅助判断，请结合论文上下文人工复核。</p>
+        <div class="detail-grid">
+          <div class="col-box">
+            <h3>修改说明</h3>
+            <div class="col-content" id="reduce-explanation"></div>
+          </div>
+          <div class="col-box">
+            <h3>质量检查</h3>
+            <div class="col-content" id="reduce-quality"></div>
+          </div>
+          <div class="col-box">
+            <h3>风险提醒</h3>
+            <div class="col-content" id="reduce-risk"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -703,9 +725,30 @@
         <pre class="stream-preview" id="polish-stream"></pre>
       </div>
       <div class="output-area" id="polish-output" style="display:none;">
-        <div class="col-box">
-          <h3>润色结果（下划线处可悬停查看修改理由）</h3>
-          <div class="col-content" id="polish-result"></div>
+        <div class="two-col">
+          <div class="col-box">
+            <h3>原文</h3>
+            <div class="col-content" id="polish-original"></div>
+          </div>
+          <div class="col-box">
+            <h3>润色结果（下划线处可悬停查看修改理由）</h3>
+            <div class="col-content" id="polish-result"></div>
+          </div>
+        </div>
+        <p class="assistive-note">润色结果仅供辅助修改，请确认未改变原文观点和事实依据。</p>
+        <div class="detail-grid">
+          <div class="col-box">
+            <h3>修改说明</h3>
+            <div class="col-content" id="polish-explanation"></div>
+          </div>
+          <div class="col-box">
+            <h3>质量检查</h3>
+            <div class="col-content" id="polish-quality"></div>
+          </div>
+          <div class="col-box">
+            <h3>风险提醒</h3>
+            <div class="col-content" id="polish-risk"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1016,28 +1059,83 @@
   }
 
   // ============ Prompt 定义 ============
-  const REDUCE_PROMPT = `你是一个学术文本重组专家。将以下文字进行句式多样化处理，要求：
-1. 严格禁止单纯替换同义词
-2. 优先拆分长句为多个短句，或将短句合并重组
-3. 改变句子结构：陈述句改分析句，被动改主动（或反过来）
-4. 重新组织段落内的逻辑顺序，打散原有语流
-5. 将"进行XX"类名词化表达改为动词化表达
-6. 保留所有专业术语、数据、引用、人名、地名不变
-7. 改写后语义必须与原文完全一致
+  const REDUCE_PROMPT = `你是一个谨慎的中文论文降重与改写质量检查助手。你的任务不是把文本改得越不像原文越好，而是在保持原意的前提下进行适度句式调整，并帮助用户判断改写质量。
 
-请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"rewritten": "改写后的文本", "reduction_percent": 数字, "changes_count": 数字}，其中 reduction_percent 是你估算的重复率降低百分比（0-100 的整数），changes_count 是句式结构调整的处数。`;
+改写原则：
+1. 原意保持优先于句式变化。
+2. 不要新增原文没有的数据、案例、文献、结论或更具体的研究对象。
+3. 不要删除原文关键概念、限定条件、判断强度和专业术语。
+4. 不要为了降重而牺牲准确性，不要把准确表达改得更空泛。
+5. 如果原文已经较规范，可以保守改写。
+6. 可通过拆分长句、合并短句、调整语序、替换重复句式等方式降低表达重复感。
+7. 如果存在可能改偏原意、删减关键信息或新增信息的地方，必须在 risk_reminders 中提示人工复核。
+8. 质量检查只能辅助判断，不能做绝对结论。
+
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：
+{
+  "rewritten": "改写后的文本",
+  "reduction_percent": 数字,
+  "changes_count": 数字,
+  "explanation": [
+    "说明本次主要修改了什么",
+    "说明哪些地方做了句式调整或词语替换",
+    "说明如何尽量保持原意"
+  ],
+  "quality_check": {
+    "meaning_preserved": "保持 / 基本保持 / 存在偏移",
+    "information_integrity": "完整 / 基本完整 / 有缺失风险",
+    "new_information_risk": "暂未发现明显新增信息 / 存在新增信息风险",
+    "sentence_variation": "轻微 / 适中 / 明显",
+    "risk_level": "低 / 中 / 高"
+  },
+  "risk_reminders": [
+    "提醒用户需要人工复核的地方",
+    "如果没有明显风险，说明建议结合上下文人工确认"
+  ]
+}`;
 
   function getPolishPrompt(level) {
-    return `你是学术写作润色助手。请将用户输入的口语化或不规范表达，按照"${level}"强度改写为学术规范表达。
+    return `你是谨慎的中文论文润色与改写质量检查助手。请将用户输入的口语化或不规范表达，按照"${level}"强度改写为学术规范表达，并帮助用户判断润色是否保持原意。
 
 三档强度定义如下：
 - 轻度：只修正语法错误和明显口语词，不改变句式和段落结构。
 - 标准：在轻度基础上，将口语化句式改写为学术句式，把主观表达替换为客观表达，统一学术用语风格。
-- 严格：在标准基础上，重构段落的论证逻辑，补充必要的学术连接词，将段落改写为"论点—依据—结论"三段式结构。
+- 严格：在标准基础上，优化段落内的论证衔接和表达顺序，但不得新增原文没有的事实依据。
 
-所有强度均不得改动原文中的数据、引用（如文献标注、数字编号）和专有名词。
+润色原则：
+1. 学术润色不是把句子改得越复杂越好，准确表达优先于华丽表达。
+2. 不新增原文没有的数据、案例、文献、结论、研究背景、研究方法或研究对象。
+3. 不改变原文观点，不改变原文判断强度。
+4. 不把简单清楚的表达改成空泛套话。
+5. 不编造事实依据，不替用户补充原文没有的信息。
+6. 所有强度均不得改动原文中的数据、引用（如文献标注、数字编号）和专有名词。
+7. 如果原文已经较规范，应保守润色。
+8. 如果存在过度学术化或原意偏移风险，必须在 risk_reminders 中提示人工复核。
+9. changes 中的 revised 片段必须能在 polished 文本中精确找到。
 
-请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：{"polished": "润色后的完整文本", "changes": [{"original": "原始片段", "revised": "修改后片段", "reason": "修改理由"}]}，changes 中的 revised 片段必须能在 polished 文本中精确找到。`;
+请严格以 JSON 格式输出，不要包含任何额外说明文字，格式为：
+{
+  "polished": "润色后的完整文本",
+  "changes": [
+    {"original": "原始片段", "revised": "修改后片段", "reason": "修改理由"}
+  ],
+  "explanation": [
+    "说明本次主要优化了哪些表达",
+    "说明是否调整了句式或逻辑衔接",
+    "说明如何保持原文核心意思"
+  ],
+  "quality_check": {
+    "meaning_preserved": "保持 / 基本保持 / 存在偏移",
+    "academic_expression": "轻微提升 / 有所提升 / 明显提升",
+    "logic_clarity": "基本清晰 / 有所提升 / 仍需补充上下文",
+    "new_information_risk": "暂未发现明显新增信息 / 存在新增信息风险",
+    "risk_level": "低 / 中 / 高"
+  },
+  "risk_reminders": [
+    "提醒用户需要人工复核的地方",
+    "如果没有明显风险，说明建议结合上下文人工确认"
+  ]
+}`;
   }
 
   function getSummaryPrompt(length, lang) {
@@ -1154,10 +1252,89 @@
     return `预计重复率降低 ${result.reduction_percent ?? '?'}%（共调整 ${result.changes_count ?? '?'} 处句式）`;
   }
 
+  function normalizeArray(value, fallback) {
+    if (Array.isArray(value)) return value.filter(item => item !== null && item !== undefined && String(item).trim());
+    if (value === null || value === undefined || String(value).trim() === '') return fallback ? [fallback] : [];
+    return [String(value)];
+  }
+
+  function renderListHTML(items, fallback) {
+    const safeItems = normalizeArray(items, fallback);
+    if (!safeItems.length) return escapeHTML(fallback || '建议结合论文上下文人工确认。');
+    return safeItems.map(item => `- ${escapeHTML(String(item))}`).join('\n');
+  }
+
+  function renderQualityCheckHTML(check, labels) {
+    const source = check && typeof check === 'object' ? check : {};
+    return labels
+      .map(([key, label]) => `- ${label}：${escapeHTML(source[key] || '建议人工复核')}`)
+      .join('\n');
+  }
+
+  function renderReduceDetails(result) {
+    document.getElementById('reduce-explanation').innerHTML = renderListHTML(
+      result.explanation,
+      '本次主要进行句式调整，并尽量保持原文核心意思。'
+    );
+    document.getElementById('reduce-quality').innerHTML = renderQualityCheckHTML(result.quality_check, [
+      ['meaning_preserved', '原意保持'],
+      ['information_integrity', '信息完整'],
+      ['new_information_risk', '新增信息'],
+      ['sentence_variation', '句式变化'],
+      ['risk_level', '风险等级'],
+    ]);
+    document.getElementById('reduce-risk').innerHTML = renderListHTML(
+      result.risk_reminders,
+      '暂未发现明显风险，建议结合论文上下文人工确认。'
+    );
+  }
+
+  function renderPolishDetails(result) {
+    document.getElementById('polish-explanation').innerHTML = renderListHTML(
+      result.explanation,
+      '本次主要优化表达规范性，并尽量保持原文核心意思。'
+    );
+    document.getElementById('polish-quality').innerHTML = renderQualityCheckHTML(result.quality_check, [
+      ['meaning_preserved', '原意保持'],
+      ['academic_expression', '学术表达'],
+      ['logic_clarity', '逻辑清晰'],
+      ['new_information_risk', '新增信息'],
+      ['risk_level', '风险等级'],
+    ]);
+    document.getElementById('polish-risk').innerHTML = renderListHTML(
+      result.risk_reminders,
+      '暂未发现明显风险，建议结合论文上下文人工确认。'
+    );
+  }
+
+  function renderReduceFallback(text, content) {
+    document.getElementById('reduce-original').textContent = text;
+    document.getElementById('reduce-rewritten').textContent = content || '暂未返回改写结果。';
+    document.getElementById('reduce-percent').style.display = 'none';
+    renderReduceDetails({
+      explanation: ['AI 返回内容未能解析为结构化 JSON，已展示原始返回内容。'],
+      quality_check: {},
+      risk_reminders: ['建议结合论文上下文人工复核改写是否保持原意。'],
+    });
+    document.getElementById('reduce-output').style.display = 'block';
+  }
+
+  function renderPolishFallback(text, content) {
+    document.getElementById('polish-original').textContent = text;
+    document.getElementById('polish-result').textContent = content || '暂未返回润色结果。';
+    renderPolishDetails({
+      explanation: ['AI 返回内容未能解析为结构化 JSON，已展示原始返回内容。'],
+      quality_check: {},
+      risk_reminders: ['建议结合论文上下文人工复核润色是否改变原文观点和事实依据。'],
+    });
+    document.getElementById('polish-output').style.display = 'block';
+  }
+
   // 将 polish 结果渲染为带下划线 + hover 提示的 HTML
   function renderPolishHTML(result) {
     let html = escapeHTML(result.polished || '');
-    (result.changes || []).forEach((change, idx) => {
+    normalizeArray(result.changes).forEach((change, idx) => {
+      if (!change || typeof change !== 'object') return;
       const revised = escapeHTML(change.revised || '');
       if (!revised) return;
       const marker = `__CHANGE_${idx}__`;
@@ -1308,10 +1485,7 @@
         result = extractJSON(content);
       } catch (e) {
         console.error('[降重] JSON 解析失败，原始返回内容：', content, e);
-        document.getElementById('reduce-original').textContent = text;
-        document.getElementById('reduce-rewritten').textContent = content;
-        document.getElementById('reduce-percent').style.display = 'none';
-        document.getElementById('reduce-output').style.display = 'block';
+        renderReduceFallback(text, content);
         return;
       }
 
@@ -1321,6 +1495,7 @@
       const percentEl = document.getElementById('reduce-percent');
       percentEl.style.display = 'inline-block';
       percentEl.textContent = formatReductionBadge(result);
+      renderReduceDetails(result);
       document.getElementById('reduce-output').style.display = 'block';
     } catch (e) {
       showError('reduce', e.message);
@@ -1360,12 +1535,13 @@
         result = extractJSON(content);
       } catch (e) {
         console.error('[学术润色] JSON 解析失败，原始返回内容：', content, e);
-        document.getElementById('polish-result').textContent = content;
-        document.getElementById('polish-output').style.display = 'block';
+        renderPolishFallback(text, content);
         return;
       }
 
+      document.getElementById('polish-original').textContent = text;
       document.getElementById('polish-result').innerHTML = renderPolishHTML(result);
+      renderPolishDetails(result);
       document.getElementById('polish-output').style.display = 'block';
     } catch (e) {
       showError('polish', e.message);
