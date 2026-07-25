@@ -2,7 +2,7 @@
 
 面向大学生中文论文写作场景的 AI 体检与优化助手。
 
-[在线体验](https://hiseeu-yomiiii.github.io/inkraft/) · [作品集主页](https://hiseeu-yomiiii.github.io/portfolio/)
+[在线体验](https://cyrilla-mist.github.io/inkraft/) · [作品集主页](https://cyrilla-mist.github.io/portfolio/)
 
 ## 项目简介
 
