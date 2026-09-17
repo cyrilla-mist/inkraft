@@ -1,35 +1,39 @@
-# 墨推 · Inkraft
+# Inkraft
 
-面向大学生中文论文写作场景的 AI 体检与优化助手。
+AI-assisted writing support for Chinese academic writing workflows.
 
-[在线体验](https://cyrilla-mist.github.io/inkraft/) · [作品集主页](https://cyrilla-mist.github.io/portfolio/)
+[Live demo](https://cyrilla-mist.github.io/inkraft/) · [Portfolio](https://cyrilla-mist.github.io/portfolio/)
 
-## 项目简介
+> **Status:** Earlier experiment. Public and usable, but maintained minimally rather than developed as a current flagship product.
 
-墨推 Inkraft 不只生成或改写文字，也帮助用户判断修改后的内容是否更清楚、更规范，以及是否可能改变原意或引入未经原文支持的信息。
+## Overview
 
-项目目前围绕中文学术写作提供论文体检、降重、润色、摘要、翻译和参考文献格式化等功能，并在改写类结果中加入修改说明、质量检查和风险提醒。
+Inkraft was built to explore a more careful AI writing workflow for university students. Instead of only generating or rewriting text, it also tries to explain what changed, flag possible meaning drift, and remind the user when a result still needs manual verification.
 
-## 核心功能
+The interface is primarily designed for Chinese academic-writing tasks.
 
-- **论文体检**：检查学术表达、逻辑衔接、查重风险、AI 写作痕迹和修改优先级。
-- **论文降重**：在保持原意的前提下调整句式，并展示改写结果、修改说明、质量检查和风险提醒。
-- **学术润色**：提供不同润色强度，改善语言规范性与表达清晰度。
-- **摘要生成**：根据正文生成指定长度与语言的摘要，并提取关键词。
-- **翻译润色**：结合使用场景进行跨语言表达优化，并补充文化语境提示。
-- **参考文献格式化**：按指定格式整理参考文献，并提示可能缺失的信息。
-- **全套处理**：一次输入，同时生成降重、学术润色和摘要结果。
-- **日夜主题与响应式布局**：适配桌面端和移动端使用。
+## Features
 
-## 使用方式
+- **Writing review** — checks academic expression, logical flow, revision priorities, and possible writing risks.
+- **Paraphrasing** — restructures wording while attempting to preserve the original meaning.
+- **Academic polishing** — improves clarity and formality at different editing strengths.
+- **Abstract generation** — creates a requested-length abstract and extracts keywords.
+- **Translation polishing** — adapts wording across languages with context-aware notes.
+- **Reference formatting** — restructures citation information into requested formats and flags missing fields.
+- **Combined workflow** — produces paraphrasing, polishing, and abstract outputs from one input.
+- **Responsive UI** — supports desktop and mobile layouts with light and dark themes.
 
-1. 打开在线页面。
-2. 选择论文体检、降重、学术润色等功能。
-3. 粘贴需要处理的文本，并按需选择参数。
-4. 查看 AI 返回的结果、修改说明和风险提醒。
-5. 结合论文上下文与真实材料人工复核后再使用。
+## Design Principles
 
-## 技术实现
+Inkraft follows a few simple constraints:
+
+- preserving meaning is more important than changing sentence structure;
+- readability should not be sacrificed only to reduce textual similarity;
+- the model should not invent unsupported data, cases, citations, or conclusions;
+- risky changes should be surfaced instead of silently treated as correct;
+- AI output remains a draft that requires human review.
+
+## Technology
 
 - HTML
 - CSS
@@ -38,30 +42,28 @@
 - Cloudflare Worker
 - GitHub Pages
 
-前端使用原生 HTML、CSS 和 JavaScript 构建，不依赖前端框架。AI 请求通过 Cloudflare Worker 转发，API Key 保存在 Worker 环境变量中，不写入前端代码。
+The frontend uses native HTML, CSS, and JavaScript. Model requests are routed through a Cloudflare Worker so API credentials are not stored in the public frontend.
 
-## 质量原则
+## Usage
 
-- 原意保持优先于句式变化。
-- 不为了降重而牺牲准确性与可读性。
-- 不主动新增原文没有的数据、案例、文献或结论。
-- 对可能改变原意、扩大判断范围或缺少依据的内容给出风险提醒。
-- AI 结果仅作为写作辅助，最终内容需要用户自行核对。
+1. Open the live demo.
+2. Choose a writing workflow.
+3. Paste the text to review or revise.
+4. Adjust available parameters when needed.
+5. Review the result, change notes, and risk reminders before using the output.
 
-## 数据与使用提示
+## Limitations
 
-用户输入的文本会通过 Cloudflare Worker 发送至模型服务以完成处理。请勿提交身份证号、联系方式、未公开研究数据或其他敏感信息。
+Inkraft does not replace an instructor, academic-integrity review, plagiarism-detection service, or professional copy editor. It does not guarantee plagiarism scores, AI-detection outcomes, factual correctness, or citation validity.
 
-墨推不能替代导师意见、学术规范审查、查重系统或人工校对，也不对查重率和检测结果作保证。
+Do not submit personal identifiers, confidential research data, or other sensitive material.
 
-## 当前版本
+## Version
 
-当前版本：**v1.2**
+Current public version: **v1.2**
 
-本版本已经完成论文体检与改写质量检查，并完善了降重、润色结果中的原意保持检查和风险提醒。
-
-## 作者
+## Author
 
 Cyrilla
 
-© 2026 Cyrilla Web
+© 2026 Cyrilla
