@@ -1,0 +1,16 @@
+# Environment and Worker secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+.wrangler/
+
+# Dependencies / generated output
+node_modules/
+dist/
+
+# Local tooling / OS files
+.claude/
+.DS_Store
+Thumbs.db
